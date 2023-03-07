@@ -1,0 +1,32 @@
+[package]
+name = "plugins"
+version = "0.1.0"
+edition = "2021"
+authors = ["Max Genson <mail@maxgenson.de>"]
+license = "GPL-3.0-or-later"
+
+[workspace]
+members = [
+    ".xtask", # Needed to compile the plugins
+    
+    # The plugins
+    # ===========
+    "multi_filter",
+    "simple_delay"
+]
+
+[lib]
+crate-type = ["cdylib"]
+path = ".src/lib.rs" # Empty but necessary to compile
+
+[dependencies]
+
+
+[profile.release]
+lto = "thin"
+strip = "symbols"
+
+[profile.profiling]
+inherits = "release"
+debug = true
+strip = "none"
