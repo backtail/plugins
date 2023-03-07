@@ -3,3 +3,6 @@ name = "Simple Delay"
 
 [multi_filter]
 name = "Multi Filter"
+
+[freeverb]
+name = "Freeverb"
