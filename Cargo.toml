@@ -12,7 +12,8 @@ members = [
     # The plugins
     # ===========
     "multi_filter",
-    "simple_delay"
+    "simple_delay",
+    "freeverb"
 ]
 
 [lib]
