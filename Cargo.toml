@@ -13,7 +13,8 @@ members = [
     # ===========
     "multi_filter",
     "simple_delay",
-    "freeverb"
+    "freeverb",
+    "stereo_vca",
 ]
 
 [lib]

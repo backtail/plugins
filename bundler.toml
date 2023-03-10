@@ -6,3 +6,6 @@ name = "Multi Filter"
 
 [freeverb]
 name = "Freeverb"
+
+[stereo_vca]
+name = "Stereo VCA"
