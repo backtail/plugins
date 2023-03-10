@@ -1,0 +1,13 @@
+[package]
+name = "stereo-vca"
+version = "0.1.0"
+edition = "2021"
+authors = ["Max Genson <mail@maxgenson.de>"]
+license = "GPL-3.0-or-later"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = ["assert_process_allocs"] }
+embedded-audio-tools = { git = "https://github.com/backtail/embedded-audio-tools", rev = "ab829f4" }
