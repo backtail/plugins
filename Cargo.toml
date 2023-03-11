@@ -15,7 +15,10 @@ members = [
     "simple_delay",
     "freeverb",
     "stereo_vca",
+    "simple_oscillator",
 ]
+
+exclude = ["embedded-audio-tools", "yanel_dsp"]
 
 [lib]
 crate-type = ["cdylib"]

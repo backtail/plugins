@@ -9,3 +9,6 @@ name = "Freeverb"
 
 [stereo_vca]
 name = "Stereo VCA"
+
+[simple_oscillator]
+name = "Simple Oscillator"
