@@ -113,17 +113,18 @@ impl Plugin for Delay {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
+        let n_samples = buffer.samples() as u32;
         self.l_delay
-            .set_delay_in_secs(self.params.l_delay_time.smoothed.next());
+            .set_delay_in_secs(self.params.l_delay_time.smoothed.next_step(n_samples));
         self.r_delay
-            .set_delay_in_secs(self.params.r_delay_time.smoothed.next());
+            .set_delay_in_secs(self.params.r_delay_time.smoothed.next_step(n_samples));
 
-        let feedback = self.params.feedback.smoothed.next();
+        let feedback = self.params.feedback.smoothed.next_step(n_samples);
 
         self.l_delay.set_feedback(feedback);
         self.r_delay.set_feedback(feedback);
 
-        let mix = self.params.mix.smoothed.next();
+        let mix = self.params.mix.smoothed.next_step(n_samples);
 
         self.l_delay.set_dry(1.0 - mix);
         self.l_delay.set_wet(mix);
