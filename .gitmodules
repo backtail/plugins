@@ -3,4 +3,4 @@
 	url = https://github.com/backtail/yanel_dsp.git
 [submodule "embedded-audio-tools"]
 	path = embedded-audio-tools
-	url = https://github.com/backtail/embedded-audio-tools.git
+	url = https://github.com/backtail/embedded-audio-tools
