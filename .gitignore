@@ -1,7 +1,2 @@
 /target
 Cargo.lock
-
-# dev
-/embedded-audio-tools
-/yanel_dsp
-.gitmodules
