@@ -9,8 +9,11 @@ struct Delay {
 
 #[derive(Params)]
 struct DelayParams {
-    #[id = "Delay"]
-    pub delay: FloatParam,
+    #[id = "L Delay"]
+    pub l_delay_time: FloatParam,
+
+    #[id = "R Delay"]
+    pub r_delay_time: FloatParam,
 
     #[id = "Feedback"]
     pub feedback: FloatParam,
@@ -32,8 +35,20 @@ impl Default for Delay {
 impl Default for DelayParams {
     fn default() -> Self {
         DelayParams {
-            delay: FloatParam::new(
-                "Delay",
+            l_delay_time: FloatParam::new(
+                "L Delay",
+                0.4,
+                FloatRange::Skewed {
+                    min: 0.01,
+                    max: 3.0,
+                    factor: 0.5,
+                },
+            )
+            .with_unit(" s")
+            .with_value_to_string(formatters::v2s_f32_rounded(3)),
+
+            r_delay_time: FloatParam::new(
+                "R Delay",
                 0.4,
                 FloatRange::Skewed {
                     min: 0.01,
@@ -98,9 +113,10 @@ impl Plugin for Delay {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        let delay_time = self.params.delay.smoothed.next();
-        self.l_delay.set_delay_in_secs(delay_time);
-        self.r_delay.set_delay_in_secs(delay_time);
+        self.l_delay
+            .set_delay_in_secs(self.params.l_delay_time.smoothed.next());
+        self.r_delay
+            .set_delay_in_secs(self.params.r_delay_time.smoothed.next());
 
         let feedback = self.params.feedback.smoothed.next();
 
