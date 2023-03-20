@@ -1,6 +1,6 @@
 [submodule "yanel_dsp"]
 	path = yanel_dsp
-	url = https://github.com/backtail/yanel_dsp.git
+	url = https://github.com/backtail/yanel_dsp
 [submodule "embedded-audio-tools"]
 	path = embedded-audio-tools
 	url = https://github.com/backtail/embedded-audio-tools
