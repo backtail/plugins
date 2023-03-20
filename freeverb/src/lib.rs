@@ -81,6 +81,18 @@ impl Plugin for Freeverb {
         self.params.clone()
     }
 
+    fn initialize(
+        &mut self,
+        _audio_io_layout: &AudioIOLayout,
+        _buffer_config: &BufferConfig,
+        _context: &mut impl InitContext<Self>,
+    ) -> bool {
+        // Do this only once
+        self.freeverb.check_buffer_alignment();
+
+        true
+    }
+
     fn process(
         &mut self,
         buffer: &mut Buffer,
