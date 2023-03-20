@@ -3,7 +3,8 @@ use std::sync::Arc;
 
 struct Delay {
     params: Arc<DelayParams>,
-    delay: yanel_dsp::SimpleDelay,
+    l_delay: yanel_dsp::SimpleDelay,
+    r_delay: yanel_dsp::SimpleDelay,
 }
 
 #[derive(Params)]
@@ -22,14 +23,15 @@ impl Default for Delay {
     fn default() -> Self {
         Self {
             params: Arc::new(DelayParams::default()),
-            delay: yanel_dsp::SimpleDelay::init(48_000),
+            l_delay: yanel_dsp::SimpleDelay::init(48_000),
+            r_delay: yanel_dsp::SimpleDelay::init(48_000),
         }
     }
 }
 
 impl Default for DelayParams {
     fn default() -> Self {
-        Self {
+        DelayParams {
             delay: FloatParam::new(
                 "Delay",
                 0.4,
@@ -77,25 +79,46 @@ impl Plugin for Delay {
         self.params.clone()
     }
 
+    fn initialize(
+        &mut self,
+        _audio_io_layout: &AudioIOLayout,
+        _buffer_config: &BufferConfig,
+        _context: &mut impl InitContext<Self>,
+    ) -> bool {
+        // Do this only once
+        self.l_delay.check_buffer_alignment();
+        self.r_delay.check_buffer_alignment();
+
+        true
+    }
+
     fn process(
         &mut self,
         buffer: &mut Buffer,
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        self.delay
-            .set_delay_in_secs(self.params.delay.smoothed.next());
-        self.delay
-            .set_feedback(self.params.feedback.smoothed.next());
+        let delay_time = self.params.delay.smoothed.next();
+        self.l_delay.set_delay_in_secs(delay_time);
+        self.r_delay.set_delay_in_secs(delay_time);
+
+        let feedback = self.params.feedback.smoothed.next();
+
+        self.l_delay.set_feedback(feedback);
+        self.r_delay.set_feedback(feedback);
+
         let mix = self.params.mix.smoothed.next();
 
-        self.delay.set_dry(1.0 - mix);
-        self.delay.set_wet(mix);
+        self.l_delay.set_dry(1.0 - mix);
+        self.l_delay.set_wet(mix);
+        self.r_delay.set_dry(1.0 - mix);
+        self.r_delay.set_wet(mix);
 
         for channel_samples in buffer.iter_samples() {
-            for sample in channel_samples {
-                *sample = self.delay.tick(*sample);
-            }
+            let mut samples = channel_samples.into_iter();
+            let (left, right) = (samples.next().unwrap(), samples.next().unwrap());
+            *left = self.l_delay.tick(*left);
+            *right = self.r_delay.tick(*right);
         }
 
         ProcessStatus::Normal

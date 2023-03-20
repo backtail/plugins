@@ -10,4 +10,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = ["assert_process_allocs"] }
-yanel_dsp = { git = "https://github.com/backtail/yanel_dsp", rev = "52d9cf9" }
+yanel_dsp = { git = "https://github.com/backtail/yanel_dsp", rev = "a6c510e" }
