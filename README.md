@@ -10,13 +10,16 @@ $ cargo xtask bundle {project_name} --release
 ```
 
 # Simple Delay
-Does what is says. Has some little clicks when changing the delay time too fast. Subject to change!
+Does what is says.
 
-### Known Bugs
-Currently doesn't work under Live 10.
+#### Known Issues
+Due to different stack sizes on different OS, the delay length on Windows targets is shortened 8 times.
 
 # Multi Filter
 Varaible state filter with common filter types. Currently only Butterworth like behaviour. Pretty stable, though and sounds not so bad.
 
 # Freeverb
 An implementation of the famous Freeverb. Take a look at [Yanel DSP](https://github.com/backtail/yanel_dsp), to learn more about the origins of this code.
+
+# Stereo VCA
+A little experiment with ADSR envelopes and LR panning. Is not useful at all.
