@@ -83,6 +83,7 @@ impl Plugin for Oscillator {
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
     const AUDIO_IO_LAYOUTS: &'static [AudioIOLayout] = &[AudioIOLayout {
+        main_input_channels: NonZeroU32::new(2),
         main_output_channels: NonZeroU32::new(2),
         ..AudioIOLayout::const_default()
     }];
