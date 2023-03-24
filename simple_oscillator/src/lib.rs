@@ -1,11 +1,8 @@
-use embedded_audio_tools::phase_accumulator::PhaseAccumulator;
 use nih_plug::prelude::*;
 use nih_plug::util;
 use std::sync::Arc;
 
-use embedded_audio_tools::{
-    oscillator::UnipolarOscillator, phase_accumulator::SoftPhaseAccumulator,
-};
+use embedded_audio_tools::{FunctionalOscillator, PhaseAccumulator, SoftPhaseAccumulator};
 
 use Waveform::*;
 
@@ -19,7 +16,7 @@ enum Waveform {
 
 struct Oscillator {
     params: Arc<OscillatorParams>,
-    osc: UnipolarOscillator<SoftPhaseAccumulator>,
+    osc: FunctionalOscillator<SoftPhaseAccumulator>,
 }
 
 #[derive(Params)]
@@ -38,7 +35,7 @@ impl Default for Oscillator {
     fn default() -> Self {
         Self {
             params: Arc::new(OscillatorParams::default()),
-            osc: UnipolarOscillator::new(SoftPhaseAccumulator::new(100.0, 48_000.0)),
+            osc: FunctionalOscillator::new(SoftPhaseAccumulator::new(100.0, 48_000.0)),
         }
     }
 }
