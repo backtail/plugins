@@ -12,3 +12,6 @@ name = "Stereo VCA"
 
 [simple_oscillator]
 name = "Simple Oscillator"
+
+[simple_gui]
+name = "Simple GUI"

@@ -16,6 +16,7 @@ members = [
     "freeverb",
     "stereo_vca",
     "simple_oscillator",
+    "simple_gui"
 ]
 
 exclude = ["embedded-audio-tools", "yanel_dsp"]
