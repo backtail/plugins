@@ -11,5 +11,3 @@ crate-type = ["cdylib"]
 [dependencies]
 nih_plug = { path = "../../nih-plug" }
 nih_plug_vizia =  { path = "../../nih-plug/nih_plug_vizia" }
-embedded-audio-tools = { path = "../embedded-audio-tools" }
-atomic_float = "0.1"
