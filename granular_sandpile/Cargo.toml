@@ -1,0 +1,13 @@
+[package]
+name = "granular_sandpile"
+version = "0.1.0"
+edition = "2021"
+authors = ["Max Genson <mail@maxgenson.de>"]
+license = "GPL-3.0-or-later"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+nih_plug = { path = "../../nih-plug" }
+nih_plug_vizia =  { path = "../../nih-plug/nih_plug_vizia" }
