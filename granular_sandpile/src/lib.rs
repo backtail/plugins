@@ -1,13 +1,17 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use nih_plug::prelude::*;
 use nih_plug_vizia::ViziaState;
 
+use sandpile::Sandpile;
+
 mod editor;
+mod sandpile;
 mod subwindow;
 
 struct GranuSandpile {
     params: Arc<GranuSandpileParams>,
+    sandpile: Arc<Mutex<Sandpile>>,
 }
 
 #[derive(Params)]
@@ -16,12 +20,18 @@ pub struct GranuSandpileParams {
     /// restored.
     #[persist = "editor-state"]
     editor_state: Arc<ViziaState>,
+
+    #[id = "run-break-button"]
+    pub run_break_button: BoolParam,
 }
 
 impl Default for GranuSandpile {
     fn default() -> Self {
+        let mut sandpile = Sandpile::new(25, 25);
+        sandpile.set_value_at(2000, (12, 12));
         Self {
             params: Arc::new(GranuSandpileParams::default()),
+            sandpile: Arc::new(Mutex::new(sandpile)),
         }
     }
 }
@@ -30,6 +40,8 @@ impl Default for GranuSandpileParams {
     fn default() -> Self {
         Self {
             editor_state: editor::default_state(),
+
+            run_break_button: BoolParam::new("Run/Break", false),
         }
     }
 }
@@ -63,6 +75,7 @@ impl Plugin for GranuSandpile {
             self.params.editor_state.clone(),
             editor::Data {
                 params: self.params.clone(),
+                sandpile: self.sandpile.clone(),
             },
         )
     }
@@ -73,7 +86,14 @@ impl Plugin for GranuSandpile {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        // do nothing
+        {
+            // topple sandpile
+            let mut s = self.sandpile.lock().unwrap();
+
+            if self.params.run_break_button.value() {
+                s.topple_sandpile();
+            }
+        }
 
         ProcessStatus::Normal
     }

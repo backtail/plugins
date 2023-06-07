@@ -1,13 +1,19 @@
+use std::sync::{Arc, Mutex};
+
 use nih_plug_vizia::vizia::{
     prelude::*,
     vg::{Color, ImageFlags, Paint, Path, PixelFormat},
 };
 
-pub struct Subwindow {}
+use crate::Sandpile;
+
+pub struct Subwindow {
+    grid: Arc<Mutex<Sandpile>>,
+}
 
 impl Subwindow {
-    pub fn new(cx: &mut Context) -> Handle<'_, Self> {
-        Self {}.build(cx, |_| {})
+    pub fn new(cx: &mut Context, grid: Arc<Mutex<Sandpile>>) -> Handle<'_, Self> {
+        Self { grid }.build(cx, |_| {})
     }
 }
 
@@ -19,16 +25,14 @@ impl View for Subwindow {
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let bounds = cx.bounds();
 
+        let s = self.grid.lock().unwrap().clone();
+
         // Prepare the image, in this case a grid.
-        let grid_size: usize = 8;
-        let edge_length = 32 * grid_size + 1;
+        let grid_size: usize = 12;
+        let len_x = s.len_x() * grid_size + 1;
+        let len_y = s.len_y() * grid_size + 1;
         let image_id = canvas
-            .create_image_empty(
-                edge_length,
-                edge_length,
-                PixelFormat::Rgb8,
-                ImageFlags::empty(),
-            )
+            .create_image_empty(len_x, len_y, PixelFormat::Rgb8, ImageFlags::empty())
             .unwrap();
 
         // postion of square image on canvas
@@ -40,30 +44,26 @@ impl View for Subwindow {
         //      |                    |
         //      |                    |
         //      |                    |
-        //      |                    | edge_length
+        //      |                    | len_y
         //      |                    |
         //      |                    |
         //      |                    |
         //      +--------------------+
-        //            edge_length
+        //              len_x
         //
-        if let Ok(size) = canvas.image_size(image_id) {
+        if let Ok(_size) = canvas.image_size(image_id) {
             // clear background with black
             canvas.clear_rect(
                 bounds.x as u32,
                 bounds.y as u32,
-                size.0 as u32,
-                size.1 as u32,
+                len_x as u32,
+                len_y as u32,
                 Color::black(),
             );
 
-            // setup grid
-            let x_max = (size.0 / grid_size) - 1;
-            let y_max = (size.1 / grid_size) - 1;
-
             // iterate through the tiles
-            for x in 0..(size.0 / grid_size) {
-                for y in 0..(size.1 / grid_size) {
+            for x in 0..s.len_x() {
+                for y in 0..s.len_y() {
                     // offset in image with bounds.x and bounds.y
                     canvas.clear_rect(
                         (bounds.x as usize + x * grid_size + 1) as u32,
@@ -71,16 +71,12 @@ impl View for Subwindow {
                         (grid_size - 1) as u32,
                         (grid_size - 1) as u32,
                         // coloring
-                        if x == 0 || y == 0 || x == x_max || y == y_max {
-                            Color::rgb(40, 80, 40)
-                        } else {
-                            match (x % 2, y % 2) {
-                                (0, 0) => Color::rgb(125, 125, 125),
-                                (1, 0) => Color::rgb(155, 155, 155),
-                                (0, 1) => Color::rgb(155, 155, 155),
-                                (1, 1) => Color::rgb(105, 105, 155),
-                                _ => Color::rgb(255, 0, 255),
-                            }
+                        match s.get_value_at((x, y)) {
+                            0 => Color::rgb(200, 210, 209),
+                            1 => Color::rgb(104, 144, 77),
+                            2 => Color::rgb(20, 71, 30),
+                            // 3 => Color::rgb(238, 155, 1),
+                            _ => Color::rgb(218, 106, 0),
                         },
                     );
                 }
@@ -89,7 +85,7 @@ impl View for Subwindow {
 
         // procedure to display image on canvas
         let mut window_box = Path::new();
-        window_box.rect(bounds.x, bounds.y, edge_length as f32, edge_length as f32);
+        window_box.rect(bounds.x, bounds.y, len_x as f32, len_y as f32);
 
         canvas.fill_path(
             &mut window_box,
@@ -97,8 +93,8 @@ impl View for Subwindow {
                 image_id,
                 bounds.x,
                 bounds.y,
-                edge_length as f32,
-                edge_length as f32,
+                len_x as f32,
+                len_y as f32,
                 0.0,
                 0.0,
             ),
