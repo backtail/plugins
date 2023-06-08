@@ -33,11 +33,19 @@ impl Sandpile {
         self.cells[(coordinate)] = value;
     }
 
+    pub fn add_at(&mut self, value: usize, coordinate: (usize, usize)) {
+        self.cells[(coordinate)] = self.cells[(coordinate)].saturating_add(value);
+    }
+
+    pub fn remove_at(&mut self, value: usize, coordinate: (usize, usize)) {
+        self.cells[(coordinate)] = self.cells[(coordinate)].saturating_sub(value);
+    }
+
     pub fn get_value_at(&self, coordinate: (usize, usize)) -> usize {
         self.cells[(coordinate)]
     }
 
-    pub fn set_probailitiy(&mut self, value: f32) {
+    pub fn _set_probailitiy(&mut self, value: f32) {
         self.probability_to_topple = value.clamp(0.001, 1.0);
     }
 
@@ -49,7 +57,7 @@ impl Sandpile {
         self.y
     }
 
-    pub fn topple(&mut self, value: usize, x: usize, y: usize) {
+    fn topple(&mut self, value: usize, x: usize, y: usize) {
         let x_compare = x as isize;
         let y_compare = y as isize;
         let x_max = (self.x - 1) as isize;
@@ -82,7 +90,7 @@ impl Sandpile {
         }
     }
 
-    pub fn topple_torus(&mut self, value: usize, x: usize, y: usize) {
+    fn topple_torus(&mut self, value: usize, x: usize, y: usize) {
         let x_max = self.x - 1;
         let y_max = self.y - 1;
 
@@ -224,7 +232,7 @@ impl Sandpile {
         }
     }
 
-    pub fn topple_torus_naive(&mut self) {
+    pub fn _topple_torus_naive(&mut self) {
         let mut been_toppled = false;
 
         // use old algorithm if probability is 1 since it is way more effecient

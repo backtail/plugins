@@ -12,6 +12,7 @@ mod subwindow;
 struct GranuSandpile {
     params: Arc<GranuSandpileParams>,
     sandpile: Arc<Mutex<Sandpile>>,
+    next_bar: f64,
 }
 
 #[derive(Params)]
@@ -21,8 +22,17 @@ pub struct GranuSandpileParams {
     #[persist = "editor-state"]
     editor_state: Arc<ViziaState>,
 
+    #[nested(group = "sandpile-editor-state")]
+    sandpile_editor_state: SandpileEditorParams,
+}
+
+#[derive(Params)]
+struct SandpileEditorParams {
     #[id = "run-break-button"]
     pub run_break_button: BoolParam,
+
+    #[id = "user_pile_amount"]
+    user_pile_amount: IntParam,
 }
 
 impl Default for GranuSandpile {
@@ -32,6 +42,7 @@ impl Default for GranuSandpile {
         Self {
             params: Arc::new(GranuSandpileParams::default()),
             sandpile: Arc::new(Mutex::new(sandpile)),
+            next_bar: 0.0,
         }
     }
 }
@@ -41,7 +52,14 @@ impl Default for GranuSandpileParams {
         Self {
             editor_state: editor::default_state(),
 
-            run_break_button: BoolParam::new("Run/Break", false),
+            sandpile_editor_state: SandpileEditorParams {
+                run_break_button: BoolParam::new("Run/Break", false),
+                user_pile_amount: IntParam::new(
+                    "Pile Amount",
+                    9,
+                    IntRange::Linear { min: 0, max: 1000 },
+                ),
+            },
         }
     }
 }
@@ -84,15 +102,19 @@ impl Plugin for GranuSandpile {
         &mut self,
         _buffer: &mut Buffer,
         _aux: &mut AuxiliaryBuffers,
-        _context: &mut impl ProcessContext<Self>,
+        context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        {
-            // topple sandpile
-            let mut s = self.sandpile.lock().unwrap();
-
-            if self.params.run_break_button.value() {
-                s.topple_sandpile();
+        let t = context.transport();
+        if t.playing {
+            if t.pos_beats().unwrap() * 4.0 > self.next_bar {
+                self.next_bar = (t.pos_beats().unwrap() * 4.0).floor() + 1.0;
+                {
+                    let mut s = self.sandpile.lock().unwrap();
+                    s.topple_sandpile();
+                }
             }
+        } else {
+            self.next_bar = t.bar_start_pos_beats().unwrap();
         }
 
         ProcessStatus::Normal
