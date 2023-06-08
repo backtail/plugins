@@ -12,16 +12,18 @@ use crate::Sandpile;
 pub struct Data {
     pub(crate) params: Arc<GranuSandpileParams>,
     pub(crate) sandpile: Arc<Mutex<Sandpile>>,
+    pub(crate) mouse_xy: (f32, f32),
 }
 
 pub enum SandpileEvent {
     Reset,
     Add,
     Remove,
+    UpdateMousePosition,
 }
 
 impl Model for Data {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|sandpile_event, _| match sandpile_event {
             SandpileEvent::Reset => {
                 let mut s = self.sandpile.lock().unwrap();
@@ -41,6 +43,10 @@ impl Model for Data {
                     self.params.sandpile_editor_state.user_pile_amount.value() as usize,
                     (12, 12),
                 );
+            }
+            SandpileEvent::UpdateMousePosition => {
+                self.mouse_xy = (cx.mouse.cursorx, cx.mouse.cursory);
+                println!("{:?}", self.mouse_xy);
             }
         });
     }
@@ -71,7 +77,9 @@ pub(crate) fn create(editor_state: Arc<ViziaState>, editor_data: Data) -> Option
                 .child_bottom(Pixels(0.0));
 
             Label::new(cx, "Sandpile Cellular Automata").top(Units::Pixels(10.0));
-            Subwindow::new(cx, editor_data.sandpile.clone()).top(Units::Pixels(4.0));
+            Subwindow::new(cx, editor_data.sandpile.clone())
+                .top(Units::Pixels(4.0))
+                .on_press(|s| s.emit(SandpileEvent::UpdateMousePosition));
 
             ParamButton::new(cx, Data::params, |params| {
                 &params.sandpile_editor_state.run_break_button

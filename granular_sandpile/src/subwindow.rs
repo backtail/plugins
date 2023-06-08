@@ -8,12 +8,12 @@ use nih_plug_vizia::vizia::{
 use crate::Sandpile;
 
 pub struct Subwindow {
-    grid: Arc<Mutex<Sandpile>>,
+    sandpile: Arc<Mutex<Sandpile>>,
 }
 
 impl Subwindow {
-    pub fn new(cx: &mut Context, grid: Arc<Mutex<Sandpile>>) -> Handle<'_, Self> {
-        Self { grid }.build(cx, |_| {})
+    pub fn new(cx: &mut Context, sandpile: Arc<Mutex<Sandpile>>) -> Handle<'_, Self> {
+        Self { sandpile }.build(cx, |_| {})
     }
 }
 
@@ -25,9 +25,9 @@ impl View for Subwindow {
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let bounds = cx.bounds();
 
-        let s = self.grid.lock().unwrap().clone();
+        let s = self.sandpile.lock().unwrap().clone();
 
-        // Prepare the image, in this case a grid.
+        // Prepare the image, in this case a sandpile.
         let grid_size: usize = 12;
         let len_x = s.len_x() * grid_size + 1;
         let len_y = s.len_y() * grid_size + 1;

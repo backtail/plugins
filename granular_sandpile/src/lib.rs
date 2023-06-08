@@ -94,6 +94,7 @@ impl Plugin for GranuSandpile {
             editor::Data {
                 params: self.params.clone(),
                 sandpile: self.sandpile.clone(),
+                mouse_xy: (0.0, 0.0),
             },
         )
     }
