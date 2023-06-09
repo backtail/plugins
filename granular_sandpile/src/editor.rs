@@ -8,6 +8,8 @@ use crate::subwindow::Subwindow;
 use crate::GranuSandpileParams;
 use crate::Sandpile;
 
+pub const SUBWINDOW_SIDE_LENGTH: f32 = 200.0;
+
 #[derive(Clone, Lens)]
 pub struct Data {
     pub(crate) params: Arc<GranuSandpileParams>,
@@ -48,11 +50,17 @@ impl Model for Data {
             }
             SandpileEvent::UpdateMousePosition => {
                 let xy = self.subwindow_xy.lock();
+                let s = self.sandpile.lock().unwrap();
+
+                // relative pixels
                 self.mouse_xy = (
                     cx.mouse.cursorx - xy.as_ref().unwrap().0,
                     cx.mouse.cursory - xy.as_ref().unwrap().1,
                 );
-                println!("{:?}", self.mouse_xy);
+
+                // grid normalized positions
+                self.mouse_xy.0 = (self.mouse_xy.0 / SUBWINDOW_SIDE_LENGTH) * s.len_x() as f32;
+                self.mouse_xy.1 = (self.mouse_xy.1 / SUBWINDOW_SIDE_LENGTH) * s.len_y() as f32;
             }
         });
     }
@@ -90,7 +98,7 @@ pub(crate) fn create(editor_state: Arc<ViziaState>, editor_data: Data) -> Option
                 editor_data.subwindow_wh.clone(),
             )
             .top(Units::Pixels(4.0))
-            .size(Units::Pixels(200.0))
+            .size(Units::Pixels(SUBWINDOW_SIDE_LENGTH))
             .on_press(|s| s.emit(SandpileEvent::UpdateMousePosition));
 
             ParamButton::new(cx, Data::params, |params| {
