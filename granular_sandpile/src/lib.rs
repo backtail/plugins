@@ -36,7 +36,7 @@ impl Default for GranuSandpile {
     fn default() -> Self {
         Self {
             params: Arc::new(GranuSandpileParams::default()),
-            sandpile: Arc::new(Mutex::new(Sandpile::new(25, 25))),
+            sandpile: Arc::new(Mutex::new(Sandpile::new(50, 50))),
             next_bar: 0.0,
         }
     }
@@ -102,11 +102,17 @@ impl Plugin for GranuSandpile {
     ) -> ProcessStatus {
         let t = context.transport();
         if t.playing {
-            if t.pos_beats().unwrap() * 4.0 > self.next_bar {
-                self.next_bar = (t.pos_beats().unwrap() * 4.0).floor() + 1.0;
+            let current_pos = t.pos_beats().unwrap() * 4.0;
+            if current_pos > self.next_bar {
+                self.next_bar = current_pos.floor() + 1.0;
                 {
                     let mut s = self.sandpile.lock().unwrap();
                     s.topple_sandpile();
+                }
+
+                if current_pos as usize % 8 == 0 {
+                    let s = self.sandpile.lock().unwrap();
+                    // println!("{:?}", s.row_averages());
                 }
             }
         } else {

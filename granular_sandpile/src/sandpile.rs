@@ -318,4 +318,28 @@ impl Sandpile {
         }
         self.is_completely_toppled = false;
     }
+
+    pub fn row_average(&self, row: usize) -> f32 {
+        let r = row.clamp(0, self.outer_grid_height());
+        let s = &self.cells[r];
+        average(&s[1..self.inner_grid_height()])
+    }
+
+    pub fn row_averages(&self) -> Vec<f32> {
+        let mut v = vec![];
+        for i in 1..=self.inner_grid_height() {
+            v.push(self.row_average(i));
+        }
+
+        v
+    }
+}
+
+fn average(slice: &[usize]) -> f32 {
+    let mut sum = 0.0;
+    for i in 0..slice.len() {
+        sum += slice[i] as f32;
+    }
+
+    sum / slice.len() as f32
 }
