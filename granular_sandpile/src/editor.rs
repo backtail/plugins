@@ -16,7 +16,6 @@ pub struct Data {
     pub(crate) sandpile: Arc<Mutex<Sandpile>>,
     pub(crate) mouse_xy: (f32, f32),
     pub(crate) subwindow_xy: Arc<Mutex<(f32, f32)>>,
-    pub(crate) subwindow_wh: Arc<Mutex<(f32, f32)>>,
 }
 
 pub enum SandpileEvent {
@@ -32,20 +31,19 @@ impl Model for Data {
             SandpileEvent::Reset => {
                 let mut s = self.sandpile.lock().unwrap();
                 s.reset();
-                s.set_value_at(5000, (12, 12));
             }
             SandpileEvent::Add => {
                 let mut s = self.sandpile.lock().unwrap();
                 s.add_at(
                     self.params.sandpile_editor_state.user_pile_amount.value() as usize,
-                    (12, 12),
+                    (self.mouse_xy.0 as usize, self.mouse_xy.1 as usize),
                 );
             }
             SandpileEvent::Remove => {
                 let mut s = self.sandpile.lock().unwrap();
                 s.remove_at(
                     self.params.sandpile_editor_state.user_pile_amount.value() as usize,
-                    (12, 12),
+                    (self.mouse_xy.0 as usize, self.mouse_xy.1 as usize),
                 );
             }
             SandpileEvent::UpdateMousePosition => {
@@ -58,9 +56,27 @@ impl Model for Data {
                     cx.mouse.cursory - xy.as_ref().unwrap().1,
                 );
 
-                // grid normalized positions
-                self.mouse_xy.0 = (self.mouse_xy.0 / SUBWINDOW_SIDE_LENGTH) * s.len_x() as f32;
-                self.mouse_xy.1 = (self.mouse_xy.1 / SUBWINDOW_SIDE_LENGTH) * s.len_y() as f32;
+                // apply scale factor
+                self.mouse_xy.0 /= cx.user_scale_factor() as f32;
+                self.mouse_xy.1 /= cx.user_scale_factor() as f32;
+
+                // normalize
+                self.mouse_xy.0 = self.mouse_xy.0 / SUBWINDOW_SIDE_LENGTH;
+                self.mouse_xy.1 = self.mouse_xy.1 / SUBWINDOW_SIDE_LENGTH;
+
+                // scale to grid size
+                self.mouse_xy.0 *= s.outer_grid_width() as f32;
+                self.mouse_xy.1 *= s.outer_grid_height() as f32;
+
+                // saturate in case of mistake
+                self.mouse_xy.0 = self
+                    .mouse_xy
+                    .0
+                    .clamp(0.0, s.outer_grid_width() as f32 - 1.0);
+                self.mouse_xy.1 = self
+                    .mouse_xy
+                    .1
+                    .clamp(0.0, s.outer_grid_height() as f32 - 1.0);
             }
         });
     }
@@ -95,14 +111,26 @@ pub(crate) fn create(editor_state: Arc<ViziaState>, editor_data: Data) -> Option
                 cx,
                 editor_data.sandpile.clone(),
                 editor_data.subwindow_xy.clone(),
-                editor_data.subwindow_wh.clone(),
             )
             .top(Units::Pixels(4.0))
             .size(Units::Pixels(SUBWINDOW_SIDE_LENGTH))
-            .on_press(|s| s.emit(SandpileEvent::UpdateMousePosition));
+            .on_mouse_down(|a, button| {
+                a.emit(SandpileEvent::UpdateMousePosition);
+                match button {
+                    MouseButton::Left => {
+                        a.emit(SandpileEvent::Add);
+                    }
+                    MouseButton::Right => {
+                        a.emit(SandpileEvent::Remove);
+                    }
+                    _ => {}
+                }
+            });
 
-            ParamButton::new(cx, Data::params, |params| {
-                &params.sandpile_editor_state.run_break_button
+            Label::new(cx, "Add/Remove Sand Grains").top(Units::Pixels(10.0));
+
+            ParamSlider::new(cx, Data::params, |params| {
+                &params.sandpile_editor_state.user_pile_amount
             })
             .top(Units::Pixels(4.0));
 
@@ -111,26 +139,7 @@ pub(crate) fn create(editor_state: Arc<ViziaState>, editor_data: Data) -> Option
                 |cx| cx.emit(SandpileEvent::Reset),
                 |cx| Label::new(cx, "Reset"),
             )
-            .top(Units::Pixels(4.0));
-
-            ParamSlider::new(cx, Data::params, |params| {
-                &params.sandpile_editor_state.user_pile_amount
-            })
             .top(Units::Pixels(10.0));
-
-            Button::new(
-                cx,
-                |cx| cx.emit(SandpileEvent::Add),
-                |cx| Label::new(cx, "Add"),
-            )
-            .top(Units::Pixels(4.0));
-
-            Button::new(
-                cx,
-                |cx| cx.emit(SandpileEvent::Remove),
-                |cx| Label::new(cx, "Remove"),
-            )
-            .top(Units::Pixels(4.0));
         })
         .row_between(Pixels(0.0))
         .child_left(Stretch(1.0))

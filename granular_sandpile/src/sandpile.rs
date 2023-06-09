@@ -29,7 +29,7 @@ impl Sandpile {
         }
     }
 
-    pub fn set_value_at(&mut self, value: usize, coordinate: (usize, usize)) {
+    pub fn _set_value_at(&mut self, value: usize, coordinate: (usize, usize)) {
         self.cells[(coordinate)] = value;
     }
 
@@ -49,12 +49,36 @@ impl Sandpile {
         self.probability_to_topple = value.clamp(0.001, 1.0);
     }
 
-    pub fn len_x(&self) -> usize {
+    pub fn outer_grid_width(&self) -> usize {
         self.x
     }
 
-    pub fn len_y(&self) -> usize {
+    pub fn outer_grid_height(&self) -> usize {
         self.y
+    }
+
+    pub fn inner_grid_width(&self) -> usize {
+        self.x - 2
+    }
+
+    pub fn inner_grid_height(&self) -> usize {
+        self.y - 2
+    }
+
+    pub fn iter_inner_width(&self) -> impl Iterator<Item = usize> + '_ {
+        (1..=self.inner_grid_width()).into_iter()
+    }
+
+    pub fn iter_inner_height(&self) -> impl Iterator<Item = usize> + '_ {
+        (1..=self.inner_grid_height()).into_iter()
+    }
+
+    pub fn iter_outer_width(&self) -> impl Iterator<Item = usize> + '_ {
+        (0..self.outer_grid_width()).into_iter()
+    }
+
+    pub fn iter_outer_height(&self) -> impl Iterator<Item = usize> + '_ {
+        (0..self.outer_grid_height()).into_iter()
     }
 
     fn topple(&mut self, value: usize, x: usize, y: usize) {

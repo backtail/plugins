@@ -10,7 +10,6 @@ use crate::Sandpile;
 pub struct Subwindow {
     sandpile: Arc<Mutex<Sandpile>>,
     pub(crate) subwindow_xy: Arc<Mutex<(f32, f32)>>,
-    pub(crate) subwindow_wh: Arc<Mutex<(f32, f32)>>,
 }
 
 impl Subwindow {
@@ -18,12 +17,10 @@ impl Subwindow {
         cx: &mut Context,
         sandpile: Arc<Mutex<Sandpile>>,
         xy: Arc<Mutex<(f32, f32)>>,
-        wh: Arc<Mutex<(f32, f32)>>,
     ) -> Handle<'_, Self> {
         Self {
             sandpile,
             subwindow_xy: xy,
-            subwindow_wh: wh,
         }
         .build(cx, |_| {})
     }
@@ -43,16 +40,10 @@ impl View for Subwindow {
             xy.as_mut().unwrap().1 = bounds.y;
         }
 
-        {
-            let mut wh = self.subwindow_wh.lock();
-            wh.as_mut().unwrap().0 = bounds.w;
-            wh.as_mut().unwrap().1 = bounds.h;
-        }
-
         let s = self.sandpile.lock().unwrap().clone();
 
-        // Prepare the image, in this case a sandpile.
-        let grid_size = bounds.w / s.len_x() as f32;
+        // grid ignores the first and last row/column
+        let grid_size = bounds.w / s.outer_grid_width() as f32;
 
         let image_id = canvas
             .create_image_empty(
@@ -72,12 +63,12 @@ impl View for Subwindow {
         //      |                    |
         //      |                    |
         //      |                    |
-        //      |                    | len_y
+        //      |                    | heigth
         //      |                    |
         //      |                    |
         //      |                    |
         //      +--------------------+
-        //              len_x
+        //              width
         //
         if let Ok(_size) = canvas.image_size(image_id) {
             // clear background with white
@@ -90,21 +81,28 @@ impl View for Subwindow {
             );
 
             // iterate through the tiles
-            for x in 0..s.len_x() {
-                for y in 0..s.len_y() {
-                    // offset in image with bounds.x and bounds.y
+            for x in s.iter_outer_width() {
+                for y in s.iter_outer_height() {
                     canvas.clear_rect(
                         (bounds.x as usize + x * grid_size as usize) as u32,
                         (bounds.y as usize + y * grid_size as usize) as u32,
-                        (grid_size) as u32,
-                        (grid_size) as u32,
+                        grid_size as u32,
+                        grid_size as u32,
                         // coloring
-                        match s.get_value_at((x, y)) {
-                            0 => Color::rgb(200, 210, 209),
-                            1 => Color::rgb(104, 144, 77),
-                            2 => Color::rgb(20, 71, 30),
-                            // 3 => Color::rgb(238, 155, 1),
-                            _ => Color::rgb(218, 106, 0),
+                        if x == 0
+                            || y == 0
+                            || x == s.outer_grid_width() - 1
+                            || y == s.outer_grid_height() - 1
+                        {
+                            Color::white()
+                        } else {
+                            match s.get_value_at((x, y)) {
+                                0 => Color::rgb(200, 210, 209),
+                                1 => Color::rgb(104, 144, 77),
+                                2 => Color::rgb(20, 71, 30),
+                                3 => Color::rgb(238, 155, 1),
+                                _ => Color::rgb(218, 106, 0),
+                            }
                         },
                     );
                 }

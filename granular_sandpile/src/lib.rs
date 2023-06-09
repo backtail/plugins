@@ -28,20 +28,15 @@ pub struct GranuSandpileParams {
 
 #[derive(Params)]
 struct SandpileEditorParams {
-    #[id = "run-break-button"]
-    pub run_break_button: BoolParam,
-
     #[id = "user_pile_amount"]
     user_pile_amount: IntParam,
 }
 
 impl Default for GranuSandpile {
     fn default() -> Self {
-        let mut sandpile = Sandpile::new(25, 25);
-        sandpile.set_value_at(2000, (12, 12));
         Self {
             params: Arc::new(GranuSandpileParams::default()),
-            sandpile: Arc::new(Mutex::new(sandpile)),
+            sandpile: Arc::new(Mutex::new(Sandpile::new(25, 25))),
             next_bar: 0.0,
         }
     }
@@ -53,11 +48,10 @@ impl Default for GranuSandpileParams {
             editor_state: editor::default_state(),
 
             sandpile_editor_state: SandpileEditorParams {
-                run_break_button: BoolParam::new("Run/Break", false),
                 user_pile_amount: IntParam::new(
                     "Pile Amount",
                     9,
-                    IntRange::Linear { min: 0, max: 1000 },
+                    IntRange::Linear { min: 0, max: 100 },
                 ),
             },
         }
@@ -96,7 +90,6 @@ impl Plugin for GranuSandpile {
                 sandpile: self.sandpile.clone(),
                 mouse_xy: (0.0, 0.0),
                 subwindow_xy: Arc::new(Mutex::new((0.0, 0.0))),
-                subwindow_wh: Arc::new(Mutex::new((0.0, 0.0))),
             },
         )
     }
