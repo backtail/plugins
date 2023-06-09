@@ -90,6 +90,7 @@ pub(crate) fn create(editor_state: Arc<ViziaState>, editor_data: Data) -> Option
                 editor_data.subwindow_wh.clone(),
             )
             .top(Units::Pixels(4.0))
+            .size(Units::Pixels(200.0))
             .on_press(|s| s.emit(SandpileEvent::UpdateMousePosition));
 
             ParamButton::new(cx, Data::params, |params| {

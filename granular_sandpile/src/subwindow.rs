@@ -52,11 +52,15 @@ impl View for Subwindow {
         let s = self.sandpile.lock().unwrap().clone();
 
         // Prepare the image, in this case a sandpile.
-        let grid_size: usize = 12;
-        let len_x = s.len_x() * grid_size + 1;
-        let len_y = s.len_y() * grid_size + 1;
+        let grid_size = bounds.w / s.len_x() as f32;
+
         let image_id = canvas
-            .create_image_empty(len_x, len_y, PixelFormat::Rgb8, ImageFlags::empty())
+            .create_image_empty(
+                bounds.w as usize,
+                bounds.h as usize,
+                PixelFormat::Rgb8,
+                ImageFlags::empty(),
+            )
             .unwrap();
 
         // postion of square image on canvas
@@ -76,13 +80,13 @@ impl View for Subwindow {
         //              len_x
         //
         if let Ok(_size) = canvas.image_size(image_id) {
-            // clear background with black
+            // clear background with white
             canvas.clear_rect(
                 bounds.x as u32,
                 bounds.y as u32,
-                len_x as u32,
-                len_y as u32,
-                Color::black(),
+                bounds.w as u32,
+                bounds.h as u32,
+                Color::white(),
             );
 
             // iterate through the tiles
@@ -90,10 +94,10 @@ impl View for Subwindow {
                 for y in 0..s.len_y() {
                     // offset in image with bounds.x and bounds.y
                     canvas.clear_rect(
-                        (bounds.x as usize + x * grid_size + 1) as u32,
-                        (bounds.y as usize + y * grid_size + 1) as u32,
-                        (grid_size - 1) as u32,
-                        (grid_size - 1) as u32,
+                        (bounds.x as usize + x * grid_size as usize) as u32,
+                        (bounds.y as usize + y * grid_size as usize) as u32,
+                        (grid_size) as u32,
+                        (grid_size) as u32,
                         // coloring
                         match s.get_value_at((x, y)) {
                             0 => Color::rgb(200, 210, 209),
@@ -109,19 +113,11 @@ impl View for Subwindow {
 
         // procedure to display image on canvas
         let mut window_box = Path::new();
-        window_box.rect(bounds.x, bounds.y, len_x as f32, len_y as f32);
+        window_box.rect(bounds.x, bounds.y, bounds.w, bounds.h);
 
         canvas.fill_path(
             &mut window_box,
-            &Paint::image(
-                image_id,
-                bounds.x,
-                bounds.y,
-                len_x as f32,
-                len_y as f32,
-                0.0,
-                0.0,
-            ),
+            &Paint::image(image_id, bounds.x, bounds.y, bounds.w, bounds.h, 0.0, 0.0),
         );
 
         canvas.restore();
