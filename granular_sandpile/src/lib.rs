@@ -95,6 +95,8 @@ impl Plugin for GranuSandpile {
                 params: self.params.clone(),
                 sandpile: self.sandpile.clone(),
                 mouse_xy: (0.0, 0.0),
+                subwindow_xy: Arc::new(Mutex::new((0.0, 0.0))),
+                subwindow_wh: Arc::new(Mutex::new((0.0, 0.0))),
             },
         )
     }

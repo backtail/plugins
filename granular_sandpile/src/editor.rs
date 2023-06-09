@@ -13,6 +13,8 @@ pub struct Data {
     pub(crate) params: Arc<GranuSandpileParams>,
     pub(crate) sandpile: Arc<Mutex<Sandpile>>,
     pub(crate) mouse_xy: (f32, f32),
+    pub(crate) subwindow_xy: Arc<Mutex<(f32, f32)>>,
+    pub(crate) subwindow_wh: Arc<Mutex<(f32, f32)>>,
 }
 
 pub enum SandpileEvent {
@@ -45,7 +47,11 @@ impl Model for Data {
                 );
             }
             SandpileEvent::UpdateMousePosition => {
-                self.mouse_xy = (cx.mouse.cursorx, cx.mouse.cursory);
+                let xy = self.subwindow_xy.lock();
+                self.mouse_xy = (
+                    cx.mouse.cursorx - xy.as_ref().unwrap().0,
+                    cx.mouse.cursory - xy.as_ref().unwrap().1,
+                );
                 println!("{:?}", self.mouse_xy);
             }
         });
@@ -77,9 +83,14 @@ pub(crate) fn create(editor_state: Arc<ViziaState>, editor_data: Data) -> Option
                 .child_bottom(Pixels(0.0));
 
             Label::new(cx, "Sandpile Cellular Automata").top(Units::Pixels(10.0));
-            Subwindow::new(cx, editor_data.sandpile.clone())
-                .top(Units::Pixels(4.0))
-                .on_press(|s| s.emit(SandpileEvent::UpdateMousePosition));
+            Subwindow::new(
+                cx,
+                editor_data.sandpile.clone(),
+                editor_data.subwindow_xy.clone(),
+                editor_data.subwindow_wh.clone(),
+            )
+            .top(Units::Pixels(4.0))
+            .on_press(|s| s.emit(SandpileEvent::UpdateMousePosition));
 
             ParamButton::new(cx, Data::params, |params| {
                 &params.sandpile_editor_state.run_break_button

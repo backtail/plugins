@@ -9,11 +9,23 @@ use crate::Sandpile;
 
 pub struct Subwindow {
     sandpile: Arc<Mutex<Sandpile>>,
+    pub(crate) subwindow_xy: Arc<Mutex<(f32, f32)>>,
+    pub(crate) subwindow_wh: Arc<Mutex<(f32, f32)>>,
 }
 
 impl Subwindow {
-    pub fn new(cx: &mut Context, sandpile: Arc<Mutex<Sandpile>>) -> Handle<'_, Self> {
-        Self { sandpile }.build(cx, |_| {})
+    pub fn new(
+        cx: &mut Context,
+        sandpile: Arc<Mutex<Sandpile>>,
+        xy: Arc<Mutex<(f32, f32)>>,
+        wh: Arc<Mutex<(f32, f32)>>,
+    ) -> Handle<'_, Self> {
+        Self {
+            sandpile,
+            subwindow_xy: xy,
+            subwindow_wh: wh,
+        }
+        .build(cx, |_| {})
     }
 }
 
@@ -24,6 +36,18 @@ impl View for Subwindow {
 
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let bounds = cx.bounds();
+
+        {
+            let mut xy = self.subwindow_xy.lock();
+            xy.as_mut().unwrap().0 = bounds.x;
+            xy.as_mut().unwrap().1 = bounds.y;
+        }
+
+        {
+            let mut wh = self.subwindow_wh.lock();
+            wh.as_mut().unwrap().0 = bounds.w;
+            wh.as_mut().unwrap().1 = bounds.h;
+        }
 
         let s = self.sandpile.lock().unwrap().clone();
 
