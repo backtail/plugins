@@ -8,7 +8,14 @@ use crate::subwindow::Subwindow;
 use crate::GranuSandpileParams;
 use crate::Sandpile;
 
+pub const GUI_WIDTH: u32 = 400;
+pub const GUI_HEIGHT: u32 = 400;
 pub const SUBWINDOW_SIDE_LENGTH: f32 = 200.0;
+
+// Makes sense to also define this here, makes it a bit easier to keep track of
+pub(crate) fn default_state() -> Arc<ViziaState> {
+    ViziaState::new(|| (GUI_WIDTH, GUI_HEIGHT))
+}
 
 #[derive(Clone, Lens)]
 pub struct Data {
@@ -82,11 +89,6 @@ impl Model for Data {
     }
 }
 
-// Makes sense to also define this here, makes it a bit easier to keep track of
-pub(crate) fn default_state() -> Arc<ViziaState> {
-    ViziaState::new(|| (800, 600))
-}
-
 pub(crate) fn create(editor_state: Arc<ViziaState>, editor_data: Data) -> Option<Box<dyn Editor>> {
     create_vizia_editor(editor_state, ViziaTheming::Custom, move |cx, _| {
         assets::register_noto_sans_light(cx);
@@ -141,8 +143,8 @@ pub(crate) fn create(editor_state: Arc<ViziaState>, editor_data: Data) -> Option
             )
             .top(Units::Pixels(10.0));
         })
-        .row_between(Pixels(0.0))
-        .child_left(Stretch(1.0))
-        .child_right(Stretch(1.0));
+        // .row_between(Pixels(0.0));
+        .child_left(Stretch(0.5))
+        .child_right(Stretch(0.5));
     })
 }
