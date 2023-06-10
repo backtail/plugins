@@ -9,5 +9,5 @@ license = "GPL-3.0-or-later"
 crate-type = ["cdylib"]
 
 [dependencies]
-nih_plug = { path = "../../nih-plug" }
-nih_plug_vizia =  { path = "../../nih-plug/nih_plug_vizia" }
+nih_plug = { path = "../nih-plug" }
+nih_plug_vizia =  { path = "../nih-plug/nih_plug_vizia" }

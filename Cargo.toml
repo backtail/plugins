@@ -20,7 +20,7 @@ members = [
     "granular_sandpile"
 ]
 
-exclude = ["embedded-audio-tools", "yanel_dsp"]
+exclude = ["embedded-audio-tools", "yanel_dsp", "nih-plug"]
 
 [lib]
 crate-type = ["cdylib"]
