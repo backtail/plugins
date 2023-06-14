@@ -10,16 +10,17 @@ use crate::{
     EditorData,
 };
 
-pub const GUI_WIDTH: u32 = 400;
+pub const GUI_WIDTH: u32 = 800;
 pub const GUI_HEIGHT: u32 = 400;
 pub const SANDPILE_CANVAS_SIDE_LENGTH: f32 = 200.0;
+// pub const WAVEFORM_CANVAS_SIDE_LENGTH: f32 = 200.0;
 
 // Makes sense to also define this here, makes it a bit easier to keep track of
 pub(crate) fn default_state() -> Arc<ViziaState> {
     ViziaState::new(|| (GUI_WIDTH, GUI_HEIGHT))
 }
 
-pub enum SandpileEvent {
+pub enum GUIEvent {
     Reset,
     Add,
     Remove,
@@ -29,28 +30,28 @@ pub enum SandpileEvent {
 impl Model for EditorData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|sandpile_event, _| match sandpile_event {
-            SandpileEvent::Reset => {
+            GUIEvent::Reset => {
                 let mut s = self.sandpile.lock().unwrap();
                 s.reset();
                 let samples = &self.audio_buffer.as_ref()[0..50];
 
                 println!("{:?}", samples);
             }
-            SandpileEvent::Add => {
+            GUIEvent::Add => {
                 let mut s = self.sandpile.lock().unwrap();
                 s.add_at(
                     self.params.sandpile_editor_state.user_pile_amount.value() as usize,
                     (self.mouse_xy.0 as usize, self.mouse_xy.1 as usize),
                 );
             }
-            SandpileEvent::Remove => {
+            GUIEvent::Remove => {
                 let mut s = self.sandpile.lock().unwrap();
                 s.remove_at(
                     self.params.sandpile_editor_state.user_pile_amount.value() as usize,
                     (self.mouse_xy.0 as usize, self.mouse_xy.1 as usize),
                 );
             }
-            SandpileEvent::UpdateMousePosition => {
+            GUIEvent::UpdateMousePosition => {
                 let xy = self.canvas_xy.lock();
                 let s = self.sandpile.lock().unwrap();
 
@@ -99,54 +100,74 @@ pub(crate) fn create(
         ResizeHandle::new(cx);
 
         VStack::new(cx, |cx| {
+            ////////////////////////////////////////////////////////////////////////////////
+            // TITLE BAR
+            ////////////////////////////////////////////////////////////////////////////////
             Label::new(cx, "Granular Sandpile")
                 .font_family(vec![FamilyOwned::Name(String::from(
                     assets::NOTO_SANS_THIN,
                 ))])
                 .font_size(30.0)
                 .height(Pixels(50.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Pixels(0.0));
+                .child_left(Stretch(1.0))
+                .child_right(Stretch(1.0));
 
-            Label::new(cx, "Sandpile Cellular Automata").top(Units::Pixels(10.0));
-            SandpileCanvas::new(
-                cx,
-                editor_data.sandpile.clone(),
-                editor_data.canvas_xy.clone(),
-            )
-            .top(Units::Pixels(4.0))
-            .size(Units::Pixels(SANDPILE_CANVAS_SIDE_LENGTH))
-            .on_mouse_down(|a, button| {
-                a.emit(SandpileEvent::UpdateMousePosition);
-                match button {
-                    MouseButton::Left => {
-                        a.emit(SandpileEvent::Add);
-                    }
-                    MouseButton::Right => {
-                        a.emit(SandpileEvent::Remove);
-                    }
-                    _ => {}
-                }
-            });
+            HStack::new(cx, |cx| {
+                ////////////////////////////////////////////////////////////////////////////////
+                // SANDPILE EDITOR
+                ////////////////////////////////////////////////////////////////////////////////
+                VStack::new(cx, |cx| {
+                    Label::new(cx, "Sandpile Cellular Automata").top(Units::Pixels(10.0));
+                    SandpileCanvas::new(
+                        cx,
+                        editor_data.sandpile.clone(),
+                        editor_data.canvas_xy.clone(),
+                    )
+                    .top(Units::Pixels(4.0))
+                    .size(Units::Pixels(SANDPILE_CANVAS_SIDE_LENGTH))
+                    .on_mouse_down(|a, button| {
+                        a.emit(GUIEvent::UpdateMousePosition);
+                        match button {
+                            MouseButton::Left => {
+                                a.emit(GUIEvent::Add);
+                            }
+                            MouseButton::Right => {
+                                a.emit(GUIEvent::Remove);
+                            }
+                            _ => {}
+                        }
+                    });
 
-            Label::new(cx, "Add/Remove Sand Grains").top(Units::Pixels(10.0));
+                    Label::new(cx, "Add/Remove Sand Grains").top(Units::Pixels(10.0));
 
-            ParamSlider::new(cx, EditorData::params, |params| {
-                &params.sandpile_editor_state.user_pile_amount
+                    ParamSlider::new(cx, EditorData::params, |params| {
+                        &params.sandpile_editor_state.user_pile_amount
+                    })
+                    .top(Units::Pixels(4.0));
+
+                    Button::new(
+                        cx,
+                        |cx| cx.emit(GUIEvent::Reset),
+                        |cx| Label::new(cx, "Reset"),
+                    )
+                    .top(Units::Pixels(10.0));
+                });
+                // .child_left(Stretch(0.3))
+                // .child_right(Stretch(0.3));
+
+                ////////////////////////////////////////////////////////////////////////////////
+                // GRANULAR EDITOR
+                ////////////////////////////////////////////////////////////////////////////////
+                VStack::new(cx, |cx| {
+                    WaveformCanvas::new(cx, editor_data.audio_buffer.clone());
+                })
+                .top(Units::Pixels(10.0))
+                .bottom(Units::Pixels(10.0));
             })
-            .top(Units::Pixels(4.0));
-
-            Button::new(
-                cx,
-                |cx| cx.emit(SandpileEvent::Reset),
-                |cx| Label::new(cx, "Reset"),
-            )
-            .top(Units::Pixels(10.0));
-
-            WaveformCanvas::new(cx, editor_data.audio_buffer.clone()).top(Units::Pixels(10.0));
-        })
-        // .row_between(Pixels(0.0));
-        .child_left(Stretch(0.5))
-        .child_right(Stretch(0.5));
+            .left(Units::Pixels(10.0))
+            .right(Units::Pixels(10.0));
+        });
+        // .child_top(Stretch(1.0))
+        // .child_bottom(Stretch(1.0));
     })
 }
