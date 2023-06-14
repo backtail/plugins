@@ -5,7 +5,10 @@ use nih_plug_vizia::{
     assets, create_vizia_editor, vizia::prelude::*, widgets::*, ViziaState, ViziaTheming,
 };
 
-use crate::{sandpile_canvas::SandpileCanvas, waveform_canvas::WaveformCanvas, EditorData};
+use crate::{
+    custom_canvas::{sandpile_canvas::SandpileCanvas, waveform_canvas::WaveformCanvas},
+    EditorData,
+};
 
 pub const GUI_WIDTH: u32 = 400;
 pub const GUI_HEIGHT: u32 = 400;

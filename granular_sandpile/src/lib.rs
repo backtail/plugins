@@ -7,10 +7,9 @@ use sandpile::Sandpile;
 
 use audrey::open;
 
+mod custom_canvas;
 mod editor;
 mod sandpile;
-mod sandpile_canvas;
-mod waveform_canvas;
 
 struct GranuSandpile {
     params: Arc<GranuSandpileParams>,
