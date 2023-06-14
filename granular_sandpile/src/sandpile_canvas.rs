@@ -7,12 +7,12 @@ use nih_plug_vizia::vizia::{
 
 use crate::Sandpile;
 
-pub struct Subwindow {
+pub struct SandpileCanvas {
     sandpile: Arc<Mutex<Sandpile>>,
-    pub(crate) subwindow_xy: Arc<Mutex<(f32, f32)>>,
+    pub canvas_xy: Arc<Mutex<(f32, f32)>>,
 }
 
-impl Subwindow {
+impl SandpileCanvas {
     pub fn new(
         cx: &mut Context,
         sandpile: Arc<Mutex<Sandpile>>,
@@ -20,22 +20,22 @@ impl Subwindow {
     ) -> Handle<'_, Self> {
         Self {
             sandpile,
-            subwindow_xy: xy,
+            canvas_xy: xy,
         }
         .build(cx, |_| {})
     }
 }
 
-impl View for Subwindow {
+impl View for SandpileCanvas {
     fn element(&self) -> Option<&'static str> {
-        Some("subwindow")
+        Some("sandpile canvas")
     }
 
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let bounds = cx.bounds();
 
         {
-            let mut xy = self.subwindow_xy.lock();
+            let mut xy = self.canvas_xy.lock();
             xy.as_mut().unwrap().0 = bounds.x;
             xy.as_mut().unwrap().1 = bounds.y;
         }

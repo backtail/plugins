@@ -1,28 +1,19 @@
-use nih_plug::prelude::*;
-use nih_plug_vizia::vizia::prelude::*;
-use nih_plug_vizia::widgets::*;
-use nih_plug_vizia::{assets, create_vizia_editor, ViziaState, ViziaTheming};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
-use crate::subwindow::Subwindow;
-use crate::GranuSandpileParams;
-use crate::Sandpile;
+use nih_plug::prelude::*;
+use nih_plug_vizia::{
+    assets, create_vizia_editor, vizia::prelude::*, widgets::*, ViziaState, ViziaTheming,
+};
+
+use crate::{sandpile_canvas::SandpileCanvas, waveform_canvas::WaveformCanvas, EditorData};
 
 pub const GUI_WIDTH: u32 = 400;
 pub const GUI_HEIGHT: u32 = 400;
-pub const SUBWINDOW_SIDE_LENGTH: f32 = 200.0;
+pub const SANDPILE_CANVAS_SIDE_LENGTH: f32 = 200.0;
 
 // Makes sense to also define this here, makes it a bit easier to keep track of
 pub(crate) fn default_state() -> Arc<ViziaState> {
     ViziaState::new(|| (GUI_WIDTH, GUI_HEIGHT))
-}
-
-#[derive(Clone, Lens)]
-pub struct Data {
-    pub(crate) params: Arc<GranuSandpileParams>,
-    pub(crate) sandpile: Arc<Mutex<Sandpile>>,
-    pub(crate) mouse_xy: (f32, f32),
-    pub(crate) subwindow_xy: Arc<Mutex<(f32, f32)>>,
 }
 
 pub enum SandpileEvent {
@@ -32,12 +23,15 @@ pub enum SandpileEvent {
     UpdateMousePosition,
 }
 
-impl Model for Data {
+impl Model for EditorData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|sandpile_event, _| match sandpile_event {
             SandpileEvent::Reset => {
                 let mut s = self.sandpile.lock().unwrap();
                 s.reset();
+                let samples = &self.audio_buffer.as_ref()[0..50];
+
+                println!("{:?}", samples);
             }
             SandpileEvent::Add => {
                 let mut s = self.sandpile.lock().unwrap();
@@ -54,7 +48,7 @@ impl Model for Data {
                 );
             }
             SandpileEvent::UpdateMousePosition => {
-                let xy = self.subwindow_xy.lock();
+                let xy = self.canvas_xy.lock();
                 let s = self.sandpile.lock().unwrap();
 
                 // relative pixels
@@ -68,8 +62,8 @@ impl Model for Data {
                 self.mouse_xy.1 /= cx.user_scale_factor() as f32;
 
                 // normalize
-                self.mouse_xy.0 = self.mouse_xy.0 / SUBWINDOW_SIDE_LENGTH;
-                self.mouse_xy.1 = self.mouse_xy.1 / SUBWINDOW_SIDE_LENGTH;
+                self.mouse_xy.0 = self.mouse_xy.0 / SANDPILE_CANVAS_SIDE_LENGTH;
+                self.mouse_xy.1 = self.mouse_xy.1 / SANDPILE_CANVAS_SIDE_LENGTH;
 
                 // scale to grid size
                 self.mouse_xy.0 *= s.outer_grid_width() as f32;
@@ -89,7 +83,10 @@ impl Model for Data {
     }
 }
 
-pub(crate) fn create(editor_state: Arc<ViziaState>, editor_data: Data) -> Option<Box<dyn Editor>> {
+pub(crate) fn create(
+    editor_state: Arc<ViziaState>,
+    editor_data: EditorData,
+) -> Option<Box<dyn Editor>> {
     create_vizia_editor(editor_state, ViziaTheming::Custom, move |cx, _| {
         assets::register_noto_sans_light(cx);
         assets::register_noto_sans_thin(cx);
@@ -109,13 +106,13 @@ pub(crate) fn create(editor_state: Arc<ViziaState>, editor_data: Data) -> Option
                 .child_bottom(Pixels(0.0));
 
             Label::new(cx, "Sandpile Cellular Automata").top(Units::Pixels(10.0));
-            Subwindow::new(
+            SandpileCanvas::new(
                 cx,
                 editor_data.sandpile.clone(),
-                editor_data.subwindow_xy.clone(),
+                editor_data.canvas_xy.clone(),
             )
             .top(Units::Pixels(4.0))
-            .size(Units::Pixels(SUBWINDOW_SIDE_LENGTH))
+            .size(Units::Pixels(SANDPILE_CANVAS_SIDE_LENGTH))
             .on_mouse_down(|a, button| {
                 a.emit(SandpileEvent::UpdateMousePosition);
                 match button {
@@ -131,7 +128,7 @@ pub(crate) fn create(editor_state: Arc<ViziaState>, editor_data: Data) -> Option
 
             Label::new(cx, "Add/Remove Sand Grains").top(Units::Pixels(10.0));
 
-            ParamSlider::new(cx, Data::params, |params| {
+            ParamSlider::new(cx, EditorData::params, |params| {
                 &params.sandpile_editor_state.user_pile_amount
             })
             .top(Units::Pixels(4.0));
@@ -142,6 +139,8 @@ pub(crate) fn create(editor_state: Arc<ViziaState>, editor_data: Data) -> Option
                 |cx| Label::new(cx, "Reset"),
             )
             .top(Units::Pixels(10.0));
+
+            WaveformCanvas::new(cx, editor_data.audio_buffer.clone()).top(Units::Pixels(10.0));
         })
         // .row_between(Pixels(0.0));
         .child_left(Stretch(0.5))

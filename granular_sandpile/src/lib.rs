@@ -1,18 +1,35 @@
 use std::sync::{Arc, Mutex};
 
 use nih_plug::prelude::*;
-use nih_plug_vizia::ViziaState;
+use nih_plug_vizia::{vizia::prelude::*, ViziaState};
 
 use sandpile::Sandpile;
 
+use audrey::open;
+
 mod editor;
 mod sandpile;
-mod subwindow;
+mod sandpile_canvas;
+mod waveform_canvas;
 
 struct GranuSandpile {
     params: Arc<GranuSandpileParams>,
     sandpile: Arc<Mutex<Sandpile>>,
+    audio_buffer: Arc<Vec<f32>>,
     next_bar: f64,
+}
+
+#[derive(Clone, Lens)]
+pub struct EditorData {
+    pub params: Arc<GranuSandpileParams>,
+    pub sandpile: Arc<Mutex<Sandpile>>,
+
+    // Audio
+    pub audio_buffer: Arc<Vec<f32>>,
+
+    // Window
+    pub mouse_xy: (f32, f32),
+    pub canvas_xy: Arc<Mutex<(f32, f32)>>,
 }
 
 #[derive(Params)]
@@ -34,9 +51,17 @@ struct SandpileEditorParams {
 
 impl Default for GranuSandpile {
     fn default() -> Self {
+        // load wav file
+        let guitar_buffer = open("granular_sandpile/src/samples/guitar.wav")
+            .unwrap()
+            .frames::<[f32; 1]>()
+            .map(|frame| frame.unwrap()[0])
+            .collect::<Vec<_>>();
+
         Self {
             params: Arc::new(GranuSandpileParams::default()),
             sandpile: Arc::new(Mutex::new(Sandpile::new(50, 50))),
+            audio_buffer: Arc::new(guitar_buffer),
             next_bar: 0.0,
         }
     }
@@ -85,11 +110,12 @@ impl Plugin for GranuSandpile {
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
         editor::create(
             self.params.editor_state.clone(),
-            editor::Data {
+            EditorData {
                 params: self.params.clone(),
                 sandpile: self.sandpile.clone(),
+                audio_buffer: self.audio_buffer.clone(),
                 mouse_xy: (0.0, 0.0),
-                subwindow_xy: Arc::new(Mutex::new((0.0, 0.0))),
+                canvas_xy: Arc::new(Mutex::new((0.0, 0.0))),
             },
         )
     }
@@ -111,7 +137,7 @@ impl Plugin for GranuSandpile {
                 }
 
                 if current_pos as usize % 8 == 0 {
-                    let s = self.sandpile.lock().unwrap();
+                    let _s = self.sandpile.lock().unwrap();
                     // println!("{:?}", s.row_averages());
                 }
             }
