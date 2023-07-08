@@ -49,7 +49,7 @@ impl Default for DelayParams {
                 0.4,
                 FloatRange::Skewed {
                     min: 0.01,
-                    max: 3.0,
+                    max: MAX_DELAY_TIME,
                     factor: 0.5,
                 },
             )
@@ -61,7 +61,7 @@ impl Default for DelayParams {
                 0.4,
                 FloatRange::Skewed {
                     min: 0.01,
-                    max: 3.0,
+                    max: MAX_DELAY_TIME,
                     factor: 0.5,
                 },
             )
