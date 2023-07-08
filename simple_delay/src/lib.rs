@@ -1,10 +1,16 @@
 use nih_plug::prelude::*;
 use std::sync::Arc;
+use yanel_dsp::DSPUtility;
+
+const MAX_DELAY_TIME: f32 = 10.0; // seconds
 
 struct Delay {
     params: Arc<DelayParams>,
+    l_delay_buffer: Vec<f32>,
+    r_delay_buffer: Vec<f32>,
     l_delay: yanel_dsp::SimpleDelay,
     r_delay: yanel_dsp::SimpleDelay,
+    sr: f32,
 }
 
 #[derive(Params)]
@@ -26,8 +32,11 @@ impl Default for Delay {
     fn default() -> Self {
         Self {
             params: Arc::new(DelayParams::default()),
-            l_delay: yanel_dsp::SimpleDelay::init(48_000),
-            r_delay: yanel_dsp::SimpleDelay::init(48_000),
+            l_delay_buffer: vec![],
+            r_delay_buffer: vec![],
+            l_delay: yanel_dsp::SimpleDelay::init(),
+            r_delay: yanel_dsp::SimpleDelay::init(),
+            sr: 48_000.0,
         }
     }
 }
@@ -97,12 +106,16 @@ impl Plugin for Delay {
     fn initialize(
         &mut self,
         _audio_io_layout: &AudioIOLayout,
-        _buffer_config: &BufferConfig,
+        buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
-        // Do this only once
-        self.l_delay.check_buffer_alignment();
-        self.r_delay.check_buffer_alignment();
+        self.sr = buffer_config.sample_rate;
+
+        self.l_delay_buffer = vec![0_f32; MAX_DELAY_TIME.seconds_to_samples(self.sr) as usize];
+        self.r_delay_buffer = vec![0_f32; MAX_DELAY_TIME.seconds_to_samples(self.sr) as usize];
+
+        self.l_delay.set_buffer(self.l_delay_buffer.as_mut_slice());
+        self.r_delay.set_buffer(self.r_delay_buffer.as_mut_slice());
 
         true
     }
@@ -114,10 +127,21 @@ impl Plugin for Delay {
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
         let n_samples = buffer.samples() as u32;
-        self.l_delay
-            .set_delay_in_secs(self.params.l_delay_time.smoothed.next_step(n_samples));
-        self.r_delay
-            .set_delay_in_secs(self.params.r_delay_time.smoothed.next_step(n_samples));
+
+        self.l_delay.set_delay(
+            self.params
+                .l_delay_time
+                .smoothed
+                .next_step(n_samples)
+                .seconds_to_samples(self.sr),
+        );
+        self.r_delay.set_delay(
+            self.params
+                .r_delay_time
+                .smoothed
+                .next_step(n_samples)
+                .seconds_to_samples(self.sr),
+        );
 
         let feedback = self.params.feedback.smoothed.next_step(n_samples);
 
