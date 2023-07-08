@@ -12,3 +12,9 @@ name = "Stereo VCA"
 
 [simple_oscillator]
 name = "Simple Oscillator"
+
+[simple_gui]
+name = "Simple GUI"
+
+[granular_sandpile]
+name = "Granular Sandpile"

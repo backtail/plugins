@@ -4,3 +4,6 @@
 [submodule "embedded-audio-tools"]
 	path = embedded-audio-tools
 	url = https://github.com/backtail/embedded-audio-tools
+[submodule "nih-plug"]
+	path = nih-plug
+	url = https://github.com/robbert-vdh/nih-plug.git

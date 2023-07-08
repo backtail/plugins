@@ -1,5 +1,5 @@
 [package]
-name = "multi_filter"
+name = "simple_gui"
 version = "0.1.0"
 edition = "2021"
 authors = ["Max Genson <mail@maxgenson.de>"]
@@ -9,5 +9,5 @@ license = "GPL-3.0-or-later"
 crate-type = ["cdylib"]
 
 [dependencies]
-nih_plug = { path = "../nih-plug", features = ["assert_process_allocs"] }
-yanel_dsp = { path = "../yanel_dsp" }
+nih_plug = { path = "../nih-plug" }
+nih_plug_vizia =  { path = "../nih-plug/nih_plug_vizia" }
