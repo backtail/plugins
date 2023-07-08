@@ -17,7 +17,6 @@ members = [
     "stereo_vca",
     "simple_oscillator",
     "simple_gui",
-    "granular_sandpile"
 ]
 
 exclude = ["embedded-audio-tools", "yanel_dsp", "nih-plug"]
