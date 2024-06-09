@@ -15,3 +15,6 @@ name = "Simple Oscillator"
 
 [simple_gui]
 name = "Simple GUI"
+
+[granu_delay]
+name = "Granular Delay"
