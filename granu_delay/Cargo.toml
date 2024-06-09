@@ -12,6 +12,8 @@ crate-type = ["cdylib"]
 nih_plug = { path = "../nih-plug", features = ["assert_process_allocs"] }
 yanel_dsp = { path = "../yanel_dsp" }
 
+granulator = { path = "../../granulator-rs" }
+
 # embedded-audio-tools = { git = "https://github.com/backtail/embedded-audio-tools.git" }
 
 # for dev

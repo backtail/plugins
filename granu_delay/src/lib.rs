@@ -1,25 +1,30 @@
 
-mod granu_delay;
+mod simple_delay;
 
 use nih_plug::prelude::*;
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 use yanel_dsp::DSPUtility;
 
 use embedded_audio_tools as tools;
-use granu_delay::SimpleStereoDelay;
+use simple_delay::SimpleStereoDelay;
+use granulator::{Granulator, UserSettings};
 
-const MAX_DELAY_TIME: f32 = 10.0; // seconds
 
-struct Delay {
-    params: Arc<DelayParams>,
-    l_delay_buffer: Vec<f32>,
-    r_delay_buffer: Vec<f32>,
+const MAX_DELAY_TIME: f32 = 2.0; // seconds
+const SETTINGS: UserSettings = UserSettings::new_empty();
+
+struct GranuDelay {
+    params: Arc<GranuDelayParams>,
+    l_buffer: Vec<f32>,
+    r_buffer: Vec<f32>,
     delay: SimpleStereoDelay,
+    granu: Granulator,
     sr: f32,
+    last_time: Instant,
 }
 
 #[derive(Params)]
-struct DelayParams {
+struct GranuDelayParams {
     #[id = "L Delay"]
     pub l_delay_time: FloatParam,
 
@@ -31,23 +36,31 @@ struct DelayParams {
 
     #[id = "Mix"]
     pub mix: FloatParam,
+
+    #[id = "Enable Delay"]
+    pub enable_delay: BoolParam,
+
+    #[id = "Enable Granu"]
+    pub enable_granu: BoolParam,
 }
 
-impl Default for Delay {
+impl Default for GranuDelay {
     fn default() -> Self {
         Self {
-            params: Arc::new(DelayParams::default()),
-            l_delay_buffer: vec![],
-            r_delay_buffer: vec![],
+            params: Arc::new(GranuDelayParams::default()),
+            l_buffer: vec![],
+            r_buffer: vec![],
             delay: SimpleStereoDelay::init(),
+            granu: Granulator::new(48_000),
             sr: 48_000.0,
+            last_time: Instant::now(),
         }
     }
 }
 
-impl Default for DelayParams {
+impl Default for GranuDelayParams {
     fn default() -> Self {
-        DelayParams {
+        GranuDelayParams {
             l_delay_time: FloatParam::new(
                 "L Delay",
                 0.4,
@@ -79,11 +92,16 @@ impl Default for DelayParams {
             mix: FloatParam::new("Mix", 0.5, FloatRange::Linear { min: 0.0, max: 1.0 })
                 .with_value_to_string(formatters::v2s_f32_percentage(2))
                 .with_unit(" %"),
+
+            enable_delay: BoolParam::new("Enable Delay", true),
+
+            enable_granu: BoolParam::new("Enable Granu", false),
         }
     }
 }
 
-impl Plugin for Delay {
+
+impl Plugin for GranuDelay {
     const NAME: &'static str = "Granular Delay";
     const VENDOR: &'static str = "Max Genson";
     const URL: &'static str = "https://www.maxgenson.de";
@@ -115,11 +133,18 @@ impl Plugin for Delay {
     ) -> bool {
         self.sr = buffer_config.sample_rate;
 
-        self.l_delay_buffer = vec![0_f32; MAX_DELAY_TIME.seconds_to_samples(self.sr) as usize];
-        self.r_delay_buffer = vec![0_f32; MAX_DELAY_TIME.seconds_to_samples(self.sr) as usize];
+        self.l_buffer = vec![0_f32; MAX_DELAY_TIME.seconds_to_samples(self.sr) as usize];
+        self.r_buffer = vec![0_f32; MAX_DELAY_TIME.seconds_to_samples(self.sr) as usize];
 
-        self.delay.left.set_buffer(self.l_delay_buffer.as_mut_slice());
-        self.delay.right.set_buffer(self.r_delay_buffer.as_mut_slice());
+        self.delay.left.set_buffer(self.l_buffer.as_mut_slice());
+        self.delay.right.set_buffer(self.r_buffer.as_mut_slice());
+
+        self.granu.set_audio_buffer(self.l_buffer.as_slice());
+        self.granu.set_sample_rate(self.sr as usize).unwrap();
+
+        // temporary
+
+        self.granu.update_all_user_settings(&SETTINGS);
 
         true
     }
@@ -131,6 +156,7 @@ impl Plugin for Delay {
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
         let n_samples = buffer.samples() as u32;
+        let now = Instant::now();
 
         self.delay.left.set_delay(
             self.params
@@ -159,11 +185,31 @@ impl Plugin for Delay {
         self.delay.right.set_dry(1.0 - mix);
         self.delay.right.set_wet(mix);
 
+        self.granu.update_scheduler(now - self.last_time);
+
+        self.last_time = now;
+
         for channel_samples in buffer.iter_samples() {
             let mut samples = channel_samples.into_iter();
-            let (left, right) = (samples.next().unwrap(), samples.next().unwrap());
-            *left = self.delay.left.tick(*left);
-            *right = self.delay.right.tick(*right);
+            let (l_out, r_out) = (samples.next().unwrap(), samples.next().unwrap());
+
+            let (mut l_sample, mut r_sample) = (l_out.clone(), r_out.clone());
+
+            // granular processing before delay creates pitch chains
+
+            if self.params.enable_delay.value(){
+                l_sample = self.delay.left.tick(l_sample);
+                r_sample = self.delay.right.tick(r_sample);
+            }
+
+
+            // sounds fine here
+            if self.params.enable_granu.value() {
+                l_sample += self.granu.get_next_sample();
+            }
+
+            (*l_out, *r_out) = (l_sample, r_sample);
+        
         }
 
         ProcessStatus::Normal
@@ -172,10 +218,10 @@ impl Plugin for Delay {
     fn deactivate(&mut self) {}
 }
 
-impl Vst3Plugin for Delay {
+impl Vst3Plugin for GranuDelay {
     const VST3_CLASS_ID: [u8; 16] = *b"GranuDelayMG....";
     const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] =
         &[Vst3SubCategory::Fx, Vst3SubCategory::Delay];
 }
 
-nih_export_vst3!(Delay);
+nih_export_vst3!(GranuDelay);
