@@ -1,2 +1,17 @@
 /// in seconds
+pub const MIN_DELAY_TIME: f32 = 0.01;
+
+/// in seconds
 pub const MAX_DELAY_TIME: f32 = 2.0;
+
+// Default parameter values
+pub const DEFAULT_DELAY_TIME_PERCTENTAGE: f32 = 0.1;
+pub const DEFAULT_FEEDBACK_PERCTENTAGE: f32 = 0.3;
+pub const DEFAULT_SPRAY_PERCTENTAGE: f32 = 0.1;
+pub const DEFAULT_DENSITY_PERCTENTAGE: f32 = 0.7;
+pub const DEFAULT_CHAOS_PERCTENTAGE: f32 = 0.0;
+pub const DEFAULT_SPACE_PERCTENTAGE: f32 = 0.65;
+pub const DEFAULT_ROOM_PERCTENTAGE: f32 = 0.8;
+pub const DEFAULT_BEND_PERCTENTAGE: f32 = 0.2;
+pub const DEFAULT_GRAVITY_PERCTENTAGE: f32 = 0.3;
+pub const DEFAULT_DRY_WET_MIX_PERCTENTAGE: f32 = 0.3;
