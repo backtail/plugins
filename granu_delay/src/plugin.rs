@@ -47,17 +47,8 @@ impl Plugin for GranuDelay {
         self.granu.r.set_sample_rate(self.sr as usize).unwrap();
         self.granu.r.set_sample_rate(self.sr as usize).unwrap();
 
-        apply_granu_settings(
-            &mut self.granu_settings,
-            &self.params.granu,
-            &mut self.granu.l,
-        );
-
-        apply_granu_settings(
-            &mut self.granu_settings,
-            &self.params.granu,
-            &mut self.granu.r,
-        );
+        apply_granu_settings(&mut self.granu_settings, &self.params, &mut self.granu.l);
+        apply_granu_settings(&mut self.granu_settings, &self.params, &mut self.granu.r);
 
         true
     }
@@ -95,17 +86,8 @@ impl Plugin for GranuDelay {
 
         let mix = self.params.mix.smoothed.next_step(n_samples);
 
-        apply_granu_settings(
-            &mut self.granu_settings,
-            &self.params.granu,
-            &mut self.granu.l,
-        );
-
-        apply_granu_settings(
-            &mut self.granu_settings,
-            &self.params.granu,
-            &mut self.granu.r,
-        );
+        apply_granu_settings(&mut self.granu_settings, &self.params, &mut self.granu.l);
+        apply_granu_settings(&mut self.granu_settings, &self.params, &mut self.granu.r);
 
         self.granu.l.update_scheduler(now - self.last_time);
         self.granu.r.update_scheduler(now - self.last_time);
@@ -116,21 +98,28 @@ impl Plugin for GranuDelay {
             let mut samples = channel_samples.into_iter();
             let (l_out, r_out) = (samples.next().unwrap(), samples.next().unwrap());
             let (l_in, r_in) = (l_out.clone(), r_out.clone());
-            let (mut l_sample, mut r_sample) = (l_in.clone(), r_in.clone());
 
-            // granular processing before delay creates pitch chains, but also infinte amplitudes, since the feedback is applied after grains
+            let (mut l_sample, mut r_sample) = (0.0, 0.0);
 
             if self.params.enable_delay.value() {
-                l_sample = self.delay.l.tick(l_sample);
-                r_sample = self.delay.r.tick(r_sample);
-            } else {
-                l_sample = self.delay.l.tick(0.0);
-                r_sample = self.delay.r.tick(0.0);
+                l_sample = self.delay.l.get_delayed_sample();
+                r_sample = self.delay.r.get_delayed_sample();
             }
+            // granular processing before delay creates pitch chains, but also infinte amplitudes, since the feedback is applied after grains
 
-            if self.params.enable_granu.value() {
-                l_sample += self.granu.l.get_next_sample();
-                r_sample += self.granu.r.get_next_sample();
+            l_sample += self.granu.l.get_next_sample();
+            r_sample += self.granu.r.get_next_sample();
+
+            if self.params.freeze.value() {
+                self.delay.l.advance_on_delay_line();
+                self.delay.r.advance_on_delay_line();
+            } else {
+                self.delay
+                    .l
+                    .add_to_delay_line(l_in + l_sample * self.params.delay.feedback.value());
+                self.delay
+                    .r
+                    .add_to_delay_line(r_in + r_sample * self.params.delay.feedback.value());
             }
 
             // dry/wet mixing

@@ -49,6 +49,14 @@ impl SimpleDelay {
         output
     }
 
+    pub fn add_to_delay_line(&mut self, sample: f32) {
+        self.delay_line.write_and_advance(sample);
+    }
+
+    pub fn advance_on_delay_line(&mut self) {
+        self.delay_line.advance();
+    }
+
     pub fn set_buffer(&mut self, buffer: &mut [f32]) {
         self.delay_line.change_buffer(from_slice_mut(buffer));
     }
@@ -71,11 +79,7 @@ impl SimpleDelay {
         self.feedback = feedback.clamp(0.0, 1.0);
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    /// Private Functions
-    ///////////////////////////////////////////////////////////////////////////////
-
-    fn get_delayed_sample(&mut self) -> f32 {
+    pub fn get_delayed_sample(&mut self) -> f32 {
         // get delayed sample from newest delay time
         let new_delayed = self
             .delay_line
@@ -104,6 +108,10 @@ impl SimpleDelay {
             return new_delayed;
         }
     }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// Private Functions
+    ///////////////////////////////////////////////////////////////////////////////
 
     #[inline(always)]
     fn get_normalized_bipolar_crossfade(&self) -> f32 {
