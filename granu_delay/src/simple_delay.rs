@@ -41,7 +41,7 @@ impl SimpleDelay {
     /// Public Interface
     ///////////////////////////////////////////////////////////////////////////////
 
-    pub fn tick(&mut self, input: f32) -> f32 {
+    pub fn _tick(&mut self, input: f32) -> f32 {
         let output = self.get_delayed_sample() * self.feedback;
 
         self.delay_line.write_and_advance(input + output);

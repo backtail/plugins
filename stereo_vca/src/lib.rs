@@ -7,7 +7,7 @@ use std::sync::{
 
 struct StereoVCA {
     params: Arc<StereoVCAParams>,
-    adsr: embedded_audio_tools::envelope::AudioRateADSR,
+    adsr: embedded_audio_tools::AudioRateADSR,
 }
 
 #[derive(Params)]
@@ -37,9 +37,7 @@ impl Default for StereoVCA {
     fn default() -> Self {
         Self {
             params: Arc::new(StereoVCAParams::default()),
-            adsr: embedded_audio_tools::envelope::AudioRateADSR::new(
-                0.01, 0.1, 0.0, 0.1, 0.5, 48_000.0,
-            ),
+            adsr: embedded_audio_tools::AudioRateADSR::new(0.01, 0.1, 0.0, 0.1, 0.5, 48_000.0),
         }
     }
 }
