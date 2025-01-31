@@ -1,0 +1,13 @@
+[package]
+name = "synthetic_kick"
+version = "0.1.0"
+edition = "2021"
+authors = ["Max Genson <mail@maxgenson.de>"]
+license = "GPL-3.0-or-later"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+nih_plug = { path = "../nih-plug", features = ["assert_process_allocs"] }
+yanel_dsp = { path = "../yanel_dsp" }

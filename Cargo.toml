@@ -8,7 +8,7 @@ license = "GPL-3.0-or-later"
 [workspace]
 members = [
     ".xtask", # Needed to compile the plugins
-    
+
     # The plugins
     # ===========
     "multi_filter",
@@ -17,13 +17,14 @@ members = [
     "stereo_vca",
     "simple_oscillator",
     "simple_gui",
+    "synthetic_kick",
 ]
 
 exclude = ["embedded-audio-tools", "yanel_dsp", "nih-plug"]
 
 [lib]
 crate-type = ["cdylib"]
-path = ".src/lib.rs" # Empty but necessary to compile
+path = ".src/lib.rs"    # Empty but necessary to compile
 
 [dependencies]
 
