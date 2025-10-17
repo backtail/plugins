@@ -20,3 +20,6 @@ An implementation of the famous Freeverb. Take a look at [Yanel DSP](https://git
 
 # Stereo VCA
 A little experiment with ADSR envelopes and LR panning. Is not useful at all.
+
+# DISCLAIMER
+If you see this readme on Github, be aware that it only serves as a mirror from [Codeberg](https://codeberg.org/backtail/plugins). It is one-way, so development exclusively happens over there!
