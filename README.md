@@ -1,5 +1,10 @@
 # AUDIO PLUGINS
-Hey, here are my plugins. Written in Rust because I had to. I actually really like [nih-plug](https://github.com/robbert-vdh/nih-plug) as a dev platform. Backed by [Yanel DSP](https://github.com/backtail/yanel_dsp), my embedded oriented effects library, which means these plugins come with some caviats like non-changeable sampling rate (sometimes).
+
+> [!NOTE]
+>
+> Issues and PRs are only accepted on the Codeberg [repo](https://codeberg.org/backtail/plugins). Github is a mirror only.
+
+Hey, here are my plugins. Written in Rust because how could I not. I actually really like [nih-plug](https://github.com/robbert-vdh/nih-plug) as a dev platform. Backed by [Yanel DSP](https://github.com/backtail/yanel_dsp), my embedded oriented effects library, which means these plugins come with some caviats like non-changeable sampling rate (sometimes).
 
 These effects have **no** GUI. Can still be used (at least) with Reaper and Live!
 
@@ -20,6 +25,3 @@ An implementation of the famous Freeverb. Take a look at [Yanel DSP](https://git
 
 # Stereo VCA
 A little experiment with ADSR envelopes and LR panning. Is not useful at all.
-
-# DISCLAIMER
-If you see this readme on Github, be aware that it only serves as a mirror from [Codeberg](https://codeberg.org/backtail/plugins). It is one-way, so development exclusively happens over there!
